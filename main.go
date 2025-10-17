@@ -16,6 +16,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lsherman98/yt-rss-cli/api"
+	"github.com/lsherman98/yt-rss-cli/updater"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 )
 
 type viewState int
@@ -159,6 +166,15 @@ func initialModel() model {
 }
 
 func main() {
+	updated, err := updater.CheckAndUpdate(version)
+	if err != nil {
+		fmt.Printf("⚠️  Update check failed: %v\n", err)
+		fmt.Println("Continuing with current version...")
+	}
+	if updated {
+		os.Exit(0)
+	}
+
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Uh oh, there was an error: %v\n", err)
@@ -205,9 +221,9 @@ func parseCreatedTime(created string) time.Time {
 	layouts := []string{
 		time.RFC3339Nano,
 		time.RFC3339,
-		"2006-01-02 15:04:05.999Z",      
-		"2006-01-02 15:04:05Z",          
-		"2006-01-02 15:04:05.999Z07:00", 
+		"2006-01-02 15:04:05.999Z",
+		"2006-01-02 15:04:05Z",
+		"2006-01-02 15:04:05.999Z07:00",
 	}
 	for _, layout := range layouts {
 		if t, err := time.Parse(layout, created); err == nil {
