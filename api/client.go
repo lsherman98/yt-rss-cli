@@ -45,8 +45,13 @@ func (c *APIClient) do(method, path string, body io.Reader, v any) error {
 	}
 
 	if v != nil {
-		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-			return err
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		if err := json.Unmarshal(bodyBytes, v); err != nil {
+			return fmt.Errorf("failed to decode JSON response (status %d): %w\nResponse body: %s", resp.StatusCode, err, string(bodyBytes))
 		}
 	}
 

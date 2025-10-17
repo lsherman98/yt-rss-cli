@@ -82,7 +82,7 @@ func AddUrlToPodcast(podcastID, url string) (Item, error) {
 
 func GetPodcastItems(podcastID string) ([]Item, error) {
 	var items []Item
-	err := apiClient.do("GET", "/podcast/items/"+podcastID, nil, &items)
+	err := apiClient.do("GET", "/get-items/"+podcastID, nil, &items)
 	if err != nil {
 		return nil, err
 	}
