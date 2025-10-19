@@ -351,49 +351,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) helpView() string {
-	switch m.State {
-	case ViewSetAPIKey:
-		return HelpStyle.Render("Press Enter to save • Esc to cancel")
-	case ViewMainMenu:
-		return HelpStyle.Render("↑/↓: Navigate • Enter: Select • q: Quit")
-	case ViewSelectPodcast:
-		return HelpStyle.Render("↑/↓: Navigate • Enter: Select • Esc: Back • q: Quit")
-	case ViewEnterURL:
-		return HelpStyle.Render("Press Enter to add URL • Esc: Back • q: Quit")
-	case ViewItemsTable:
-		if m.Polling {
-			return HelpStyle.Render("Polling for updates... • a: Add another URL • m: Main menu • q: Quit")
-		}
-		return HelpStyle.Render("a: Add another URL • m: Main menu • q: Quit")
-	}
-	return ""
-}
-
 func (m Model) View() string {
-	var mainContent strings.Builder
+	var s strings.Builder
 
 	switch m.State {
 	case ViewSetAPIKey:
-		mainContent.WriteString(TitleStyle.Render("Set API Key"))
-		mainContent.WriteString("\n")
-		mainContent.WriteString(m.ApiKeyInput.View())
-		mainContent.WriteString("\n")
+		s.WriteString(TitleStyle.Render("Set API Key"))
+		s.WriteString("\n")
+		s.WriteString(m.ApiKeyInput.View())
+		s.WriteString("\n")
 		if m.Error != "" {
-			mainContent.WriteString(ErrorStyle.Render("Error: " + m.Error))
-			mainContent.WriteString("\n")
+			s.WriteString(ErrorStyle.Render("Error: " + m.Error))
+			s.WriteString("\n")
 		}
+		s.WriteString(HelpStyle.Render("Press Enter to save • Esc to cancel"))
 
 	case ViewMainMenu:
 		if m.Message != "" {
-			mainContent.WriteString(SuccessStyle.Render(m.Message))
-			mainContent.WriteString("\n")
+			s.WriteString(SuccessStyle.Render(m.Message))
+			s.WriteString("\n")
 		}
-		mainContent.WriteString(m.MainMenu.View())
-		mainContent.WriteString("\n")
+		s.WriteString(m.MainMenu.View())
+		s.WriteString("\n")
 
 		if m.Usage != nil {
-			mainContent.WriteString("\n")
+			s.WriteString("\n")
 			usagePercent := 0.0
 			if m.Usage.Limit > 0 {
 				usagePercent = float64(m.Usage.Usage) / float64(m.Usage.Limit)
@@ -402,59 +384,55 @@ func (m Model) View() string {
 				formatBytes(m.Usage.Usage),
 				formatBytes(m.Usage.Limit),
 			)
-			mainContent.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render(usageText))
-			mainContent.WriteString("\n")
-			mainContent.WriteString(m.ProgressBar.ViewAs(usagePercent))
-			mainContent.WriteString("\n")
+			s.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render(usageText))
+			s.WriteString("\n")
+			s.WriteString(m.ProgressBar.ViewAs(usagePercent))
+			s.WriteString("\n")
 		}
+
+		s.WriteString(HelpStyle.Render("↑/↓: Navigate • Enter: Select • q: Quit"))
 
 	case ViewSelectPodcast:
-		mainContent.WriteString(TitleStyle.Render("Select a Podcast"))
-		mainContent.WriteString("\n")
+		s.WriteString(TitleStyle.Render("Select a Podcast"))
+		s.WriteString("\n")
 		if len(m.Podcasts) == 0 {
-			mainContent.WriteString("No podcasts found.\n")
+			s.WriteString("No podcasts found.\n")
 		} else {
-			mainContent.WriteString(m.PodcastTable.View())
+			s.WriteString(m.PodcastTable.View())
 		}
-		mainContent.WriteString("\n")
+		s.WriteString("\n")
 		if m.Error != "" {
-			mainContent.WriteString(ErrorStyle.Render("Error: " + m.Error))
-			mainContent.WriteString("\n")
+			s.WriteString(ErrorStyle.Render("Error: " + m.Error))
+			s.WriteString("\n")
 		}
+		s.WriteString(HelpStyle.Render("↑/↓: Navigate • Enter: Select • Esc: Back • q: Quit"))
 
 	case ViewEnterURL:
-		mainContent.WriteString(TitleStyle.Render(fmt.Sprintf("Add URL to: %s", m.SelectedPodcast.Title)))
-		mainContent.WriteString("\n")
-		mainContent.WriteString(m.UrlInput.View())
-		mainContent.WriteString("\n")
+		s.WriteString(TitleStyle.Render(fmt.Sprintf("Add URL to: %s", m.SelectedPodcast.Title)))
+		s.WriteString("\n")
+		s.WriteString(m.UrlInput.View())
+		s.WriteString("\n")
 		if m.Error != "" {
-			mainContent.WriteString(ErrorStyle.Render("Error: " + m.Error))
-			mainContent.WriteString("\n")
+			s.WriteString(ErrorStyle.Render("Error: " + m.Error))
+			s.WriteString("\n")
 		}
+		s.WriteString(HelpStyle.Render("Press Enter to add URL • Esc: Back • q: Quit"))
 
 	case ViewItemsTable:
-		mainContent.WriteString(TitleStyle.Render(fmt.Sprintf("Items for: %s", m.SelectedPodcast.Title)))
-		mainContent.WriteString("\n")
-		mainContent.WriteString(m.ItemsTable.View())
-		mainContent.WriteString("\n")
+		s.WriteString(TitleStyle.Render(fmt.Sprintf("Items for: %s", m.SelectedPodcast.Title)))
+		s.WriteString("\n")
+		s.WriteString(m.ItemsTable.View())
+		s.WriteString("\n")
 		if m.Error != "" {
-			mainContent.WriteString(ErrorStyle.Render("Error: " + m.Error))
-			mainContent.WriteString("\n")
+			s.WriteString(ErrorStyle.Render("Error: " + m.Error))
+			s.WriteString("\n")
+		}
+		if m.Polling {
+			s.WriteString(HelpStyle.Render("Polling for updates... • a: Add another URL • m: Main menu • q: Quit"))
+		} else {
+			s.WriteString(HelpStyle.Render("a: Add another URL • m: Main menu • q: Quit"))
 		}
 	}
 
-	helpView := m.helpView()
-	mainContentHeight := lipgloss.Height(mainContent.String())
-	helpViewHeight := lipgloss.Height(helpView)
-
-	verticalSpace := m.Height - mainContentHeight - helpViewHeight
-	if verticalSpace < 0 {
-		verticalSpace = 0
-	}
-
-	return lipgloss.JoinVertical(lipgloss.Left,
-		mainContent.String(),
-		strings.Repeat("\n", verticalSpace),
-		helpView,
-	)
+	return s.String()
 }
