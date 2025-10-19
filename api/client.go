@@ -35,7 +35,7 @@ func (c *APIClient) do(method, path string, body io.Reader, v any) error {
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not connect to the API")
 	}
 	defer resp.Body.Close()
 

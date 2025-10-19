@@ -51,6 +51,10 @@ func SetApiKey(apiKey string) error {
 	return keyring.Set(serviceName, "api_key", apiKey)
 }
 
+func ClearApiKey() error {
+	return keyring.Delete(serviceName, "api_key")
+}
+
 func ListPodcasts() ([]Podcast, error) {
 	var podcasts []Podcast
 	err := apiClient.do("GET", "/list-podcasts", nil, &podcasts)

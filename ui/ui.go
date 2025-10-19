@@ -24,7 +24,12 @@ const (
 	ViewSelectPodcast
 	ViewEnterURL
 	ViewItemsTable
+	ViewFatalError
 )
+
+type FatalErrorMsg struct {
+	Err error
+}
 
 type ApiKeyCheckedMsg struct {
 	HasKey bool
@@ -146,6 +151,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case FatalErrorMsg:
+		m.Error = msg.Err.Error()
+		m.State = ViewFatalError
+		return m, tea.Quit
+
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
 		m.Height = msg.Height
@@ -161,7 +171,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case UsageLoadedMsg:
-		if msg.Err == nil {
+		if msg.Err != nil {
+			m.Error = msg.Err.Error()
+		} else {
 			m.Usage = msg.Usage
 		}
 
@@ -232,6 +244,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 				return m, tea.Quit
+			case "ctrl+d":
+				err := api.ClearApiKey()
+				if err != nil {
+					m.Error = err.Error()
+				} else {
+					m.HasAPIKey = false
+					m.Message = "API key cleared successfully!"
+					m.Error = ""
+				}
+				return m, nil
 			case "enter":
 				if m.ApiKeyInput.Value() != "" {
 					err := api.SetApiKey(m.ApiKeyInput.Value())
@@ -355,16 +377,25 @@ func (m Model) View() string {
 	var s strings.Builder
 
 	switch m.State {
+	case ViewFatalError:
+		s.WriteString(ErrorStyle.Render("Fatal Error: " + m.Error))
+		s.WriteString("\n")
+		s.WriteString(HelpStyle.Render("Press any key to exit"))
+
 	case ViewSetAPIKey:
 		s.WriteString(TitleStyle.Render("Set API Key"))
 		s.WriteString("\n")
+		if m.Message != "" {
+			s.WriteString(SuccessStyle.Render(m.Message))
+			s.WriteString("\n")
+		}
 		s.WriteString(m.ApiKeyInput.View())
 		s.WriteString("\n")
 		if m.Error != "" {
 			s.WriteString(ErrorStyle.Render("Error: " + m.Error))
 			s.WriteString("\n")
 		}
-		s.WriteString(HelpStyle.Render("Press Enter to save • Esc to cancel"))
+		s.WriteString(HelpStyle.Render("Press Enter to save • Ctrl+d to clear API key • Esc to cancel"))
 
 	case ViewMainMenu:
 		if m.Message != "" {
@@ -387,6 +418,9 @@ func (m Model) View() string {
 			s.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render(usageText))
 			s.WriteString("\n")
 			s.WriteString(m.ProgressBar.ViewAs(usagePercent))
+			s.WriteString("\n")
+		} else if m.Error != "" {
+			s.WriteString(ErrorStyle.Render("Error: " + m.Error))
 			s.WriteString("\n")
 		}
 
