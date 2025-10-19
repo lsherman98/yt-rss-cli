@@ -53,10 +53,10 @@ changelog:
             - "^ci:"
     groups:
         - title: "Features"
-          regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+          regexp: '^feat(\(.*\))?:'
           order: 0
         - title: "Bug Fixes"
-          regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+          regexp: '^fix(\(.*\))?:'
           order: 1
         - title: "Other Changes"
           order: 999
