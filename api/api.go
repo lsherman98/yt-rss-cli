@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	BaseURL     = "http://localhost:8090/api/v1"
+	BaseURL     = "http://ytrss.xyz/api/v1"
 	serviceName = "ytrss-cli"
 )
 
