@@ -12,7 +12,6 @@ builds:
       goos:
           - linux
           - darwin
-          - windows
       goarch:
           - amd64
           - arm64
@@ -27,11 +26,25 @@ archives:
     - id: ytrss-archive
       formats:
           - tar.gz
-          - zip
 
 checksum:
     name_template: "checksums.txt"
     algorithm: sha256
+
+brews:
+    - name: ytrss
+      repository:
+          owner: lsherman98
+          name: homebrew-ytrss
+          token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      commit_author:
+          name: lsherman98
+          email: levii@levisherman.com
+      homepage: "https://github.com/lsherman98/yt-rss-cli"
+      description: "A CLI tool to get RSS feeds for YouTube channels and playlists."
+      license: "MIT"
+      install: |
+          bin.install "ytrss"
 
 changelog:
     sort: asc
